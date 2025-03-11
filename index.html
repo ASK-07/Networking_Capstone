@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Capstone Project</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="root"></div>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const URL = "http://localhost:3000/books";
+        
+        function ResponseSync(method, thisurl, json) {
+            let request = new XMLHttpRequest();
+            request.open(method, thisurl, false);
+            if (json == undefined) request.send();
+            else {		
+                request.setRequestHeader('Content-Type', 'application/json');
+                request.send(json);
+            }
+            return { text:request.responseText, status:request.status };
+        }
+        
+        function listAvailable() {
+            const listAvailableLink = document.getElementById("list-available-link");
+          
+            listAvailableLink.addEventListener("click", async (event) => {
+                event.preventDefault();
+          
+                try {
+                    const thisurl = 'http://localhost:3000/books?avail=true';
+                    const rt = ResponseSync("GET",thisurl);
+          
+                    let books = JSON.parse(rt.text);
+                    bookslister(books);
+                } catch (error) {
+                    console.error('Error fetching books:', error);
+                }
+            });
+        }
+        
+        function listCheckedout() {
+            const listCheckedOutLink = document.getElementById("list-checked-out-link");
+          
+            listCheckedOutLink.addEventListener("click", async (event) => {
+                event.preventDefault();
+          
+                try {
+                    const thisurl = 'http://localhost:3000/books?avail=false';
+                    const rt = ResponseSync("GET",thisurl);
+          
+                    let books = JSON.parse(rt.text);
+                    bookslister(books);
+                } catch (error) {
+                    console.error('Error fetching books:', error);
+                }
+            });
+        }
+         
+        function bookslister(books) {
+            const htmlContent = books.map(book => {
+                return `<div class="book">
+                            <h2>Title: ${book.title}</h2>
+                            <h2>ID: ${book.id}</h2>
+                        </div>`;
+            }).join("");
+            updateContent(htmlContent);
+        }
+        
+        function updateContent(content) {
+            const paragraphContainer = document.querySelector(".paragraph-container");
+            paragraphContainer.innerHTML = content;
+        }
+        function checkoutBook() {
+            const checkOutLink = document.getElementById("check-out-link");
+            checkOutLink.addEventListener("click", async (event) => {
+                event.preventDefault();
+                const bookId = prompt("Enter the ID of the book you want to check out:");
+                if (bookId) {
+                    try {
+                        const thisurl = `http://localhost:3000/books/${bookId}`;
+                        const rt = ResponseSync("PUT", thisurl, JSON.stringify({ avail: false }));
+                        if (rt.status === 200) {
+                            alert("Book checked out successfully!");
+                            // Refresh the list of books
+                            listAvailable();
+                        } else {
+                            alert("Failed to check out the book. Please try again.");
+                        }
+                    } catch (error) {
+                        console.error('Error checking out book:', error);
+                    }
+                }
+            });
+        }
+        function checkinBook() {
+            const checkInLink = document.getElementById("check-in-link");
+            checkInLink.addEventListener("click", async (event) => {
+                event.preventDefault();
+                const bookId = prompt("Enter the ID of the book you want to check in:");
+                if (bookId) {
+                    try {
+                        const thisurl = `http://localhost:3000/books/${bookId}`;
+                        const rt = ResponseSync("PUT", thisurl, JSON.stringify({ avail: true }));
+                        if (rt.status === 200) {
+                            alert("Book checked in successfully!");
+                            // Refresh the list of books
+                            listCheckedout();
+                        } else {
+                            alert("Failed to check in the book. Please try again.");
+                        }
+                    } catch (error) {
+                        console.error('Error checking in book:', error);
+                    }
+                }
+            });
+        }
+        
+        function App() {
+            return (
+                <>
+                    <header>
+                        <h1>Capstone Project</h1>
+                        <h2>Alex Kaylor (GLB116@TXSTATE.EDU)</h2>
+                    </header>
+    
+                    <nav>
+                        <span>Nav Bar</span>
+                        <ul>
+                            <li><a href="#" onClick={listAvailable} id="list-available-link">List Available</a></li>
+                            <li><a href="#" onClick={listCheckedout} id="list-checked-out-link">List Checked Out</a></li>
+                            <li><a href="#" onClick={checkoutBook} id="check-out-link">Check Out a Book</a></li>
+                            <li><a href="#" onClick={checkinBook} id="check-in-link">Check In a Book</a></li>
+                        </ul>
+                    </nav>
+    
+                    <div className="content-wrapper">
+                        <div className="paragraph-container">
+                            {/* No books displayed initially */}
+                        </div>
+                        <div className="sidebar">
+                            <h3>Books Recommendations (intellectual)</h3>
+                            <ul>
+                                <li><a href="https://www.amazon.com/Ultimate-Breakfast-Cookbook-Pancakes-Casseroles-ebook/dp/B07FR4KLDD/ref=sr_1_1?crid=2BW0IJL3O5KN8&dib=eyJ2IjoiMSJ9.SfFPfWVvL8TsXXSXjHDNaw.-GWGXyFFmZraeNRGttQ-65O3sgnlQpehn90y7oFxJ08&dib_tag=se&keywords=Eggs%3A+The+Ultimate+Breakfast+Weapon&qid=1714435403&s=digital-text&sprefix=eggs+the+ultimate+breakfast+weapon%2Cdigital-text%2C104&sr=1-1">Eggs: The Ultimate Breakfast Weapon</a></li>
+                                <li><a href="https://www.amazon.com/Big-Bad-Breakfast-Most-Important/dp/1607747367">Crack the Day: Why Breakfast Shouldn't Start Without Eggs</a></li>
+                            </ul>
+                        </div>
+                    </div>
+    
+                    <footer>
+                        <h2>Capstone Project of Alex Kaylor worked on with no collaborators</h2>
+                    </footer>
+                </>
+            );
+        }
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+    
